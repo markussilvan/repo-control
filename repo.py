@@ -20,6 +20,7 @@ class RepoCLI():
 
     def show(self, message):
         """Show a message to the user"""
+        logging.info(message)
         print(message)
 
     def show_status(self, statuses):
@@ -111,31 +112,34 @@ class Repo():
         logging.info("Initializing repository")
 
         if self.config.project_config_exists() == False:
-            logging.info("Project configuration file doesn't exist")
             self.ui.show("Project configuration file doesn't exist")
             self.config.create_project_config()
             #TODO: error handling
         else:
-            logging.info("Project configuration file exists")
             self.ui.show("Project configuration file exists")
 
         if self.config.local_config_exists() == False:
-            logging.info("Local configuration file doesn't exist")
             self.ui.show("Local configuration file doesn't exist")
             self.config.create_local_config()
             #TODO: error handling
         else:
-            logging.info("Local configuration file exists")
             self.ui.show("Local configuration file exists")
 
         for project in self.config.project_config.projects:
-            if os.path.exists(project["path"]):
-                logging.info("Project {} already exists".format(project["name"]))
-                self.ui.show("Project {} already exists".format(project["name"]))
+            if project["path"] in [".", ""]:
+                logging.info("Skipping root project: '{}'".format(project["name"]))
                 continue
-            if self._clone_project(project) != RepoStatus.OK:
-                logging.info("Error cloning project {}".format(project["name"]))
-                self.ui.show("Error cloning project {}".format(project["name"]))
+            if os.path.exists(project["path"]):
+                self.ui.show("Project '{}' already exists".format(project["name"]))
+                continue
+            status = self._clone_project(project)
+            if status == RepoStatus.OK:
+                return RepoStatus.OK
+            if status == RepoStatus.CONFIGURATION_ERROR:
+                self.ui.show("Cloning '{}' failed. Configuration error.".format(project["name"]))
+                return RepoStatus.CONFIGURATION_ERROR
+            else:
+                self.ui.show("Error cloning project '{}'".format(project["name"]))
                 return RepoStatus.GIT_ERROR
 
         return RepoStatus.OK
@@ -168,6 +172,9 @@ class Repo():
             logging.info("Cloning project '{}' from '{}'".format(project["name"], url))
             output = subprocess.check_output(["git", "clone", url, project["path"]])
             logging.info("Command output: {}".format(output))
+        except KeyError as e:
+            logging.info("Configuration error: {}".format(e))
+            return RepoStatus.CONFIGURATION_ERROR
         except subprocess.CalledProcessError as e:
             logging.info("Subprocess returned error: {}".format(e))
             return RepoStatus.GIT_ERROR

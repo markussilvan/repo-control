@@ -69,7 +69,11 @@ class Config():
             logging.info("Loading local configuration from {}{}".format(self.project_path,
                                                                         self.local_config_file))
             with open(self.project_path + self.local_config_file) as configuration_file:
-                self.local_config = yaml.load(configuration_file)
+                try:
+                    self.local_config = yaml.load(configuration_file)
+                except Exception:
+                    logging.info("Error reading local configuration file")
+                    return RepoStatus.CONFIGURATION_ERROR
 
             logging.debug(self.local_config)
         except EnvironmentError:
