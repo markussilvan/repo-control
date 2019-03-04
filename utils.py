@@ -22,6 +22,8 @@ class RepoStatus(Enum):
     GETOPT_ERROR = 2
     GIT_ERROR = 3
     CONFIGURATION_ERROR = 4
+    OS_ERROR = 5
+    COMMAND_ERROR = 6
 
 def find_file_along_path(filename, path="."):
     """

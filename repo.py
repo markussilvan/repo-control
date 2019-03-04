@@ -156,19 +156,35 @@ class Repo():
 
     def update(self):
         """Update (pull) all projects, including the top level repo and all subprojects"""
-        pass
+        #TODO: check preconditions, if status clean, correct branch, etc?
+        for project in self.config.project_config.projects:
+            self.ui.show("Updating project '{}'".format(project["name"]))
+            status = self._pull_project(project)
+            if status != RepoStatus.OK:
+                self.ui.show("Updating project '{}' failed".format(project["name"]))
+                return status
+        return RepoStatus.OK
+
+    def _get_git_url(self, project):
+        git_server_alias = project["git_server_alias"]
+        git_server = self.config.get_server_url_by_alias(git_server_alias)
+        if git_server is None:
+            logging.info("Configuration error: "
+                    "Server url matching alias '{}' not found".format(git_server_alias))
+            return RepoStatus.CONFIGURATION_ERROR
+        url = git_server + project["git_path"]
+        return url
+
+    def _pull_project(self, project):
+        """Update a single subproject"""
+        cmd_status, output = self._run_command_on_project(project, ["git", "pull"])
+        return cmd_status
+        #TODO: add some checks first (or do them in update())
 
     def _clone_project(self, project):
-        """Clome a single subproject"""
+        """Clone a single subproject"""
         try:
-            git_server_alias = project["git_server_alias"]
-            git_server = self.config.get_server_url_by_alias(git_server_alias)
-            if git_server is None:
-                logging.info("Configuration error: "
-                             "Server url matching alias '{}' not found".format(git_server_alias))
-                return RepoStatus.CONFIGURATION_ERROR
-            git_path = project["git_path"]
-            url = git_server + git_path
+            url = self._get_git_url(project)
             logging.info("Cloning project '{}' from '{}'".format(project["name"], url))
             output = subprocess.check_output(["git", "clone", url, project["path"]])
             logging.info("Command output: {}".format(output))
@@ -176,38 +192,58 @@ class Repo():
             logging.info("Configuration error: {}".format(e))
             return RepoStatus.CONFIGURATION_ERROR
         except subprocess.CalledProcessError as e:
-            logging.info("Subprocess returned error: {}".format(e))
+            logging.info("Subprocess returned error: {}".format(e.errorcode))
+            logging.info("Subprocess command: {}".format(e.cmd))
+            logging.info("Subprocess output: {}".format(e.output))
             return RepoStatus.GIT_ERROR
         return RepoStatus.OK
 
     def _check_single_project_status(self, project):
         """Check status of a single (sub)project"""
-        output = None
         status = ProjectStatus.UNKNOWN
+        cmd_status, output = self._run_command_on_project(project, ["git", "status", "--porcelain"])
 
-        try:
-            cwd = os.getcwd()
-            os.chdir(self.config.project_path + project["path"])
-            output = subprocess.check_output(["git", "status", "--porcelain"])
-            os.chdir(cwd)
-        except OSError:
-            status = ProjectStatus.UNINITIALIZED
-        except subprocess.CalledProcessError:
-            logging.info("Subprocess returned error: {}".format(e))
-            status = ProjectStatus.UNKNOWN
-        else:
+        if cmd_status == RepoStatus.OK:
             if output == b'':
                 status = ProjectStatus.CLEAN
             else:
                 status = ProjectStatus.CHANGES
+        elif cmd_status == RepoStatus.OS_ERROR:
+            status = ProjectStatus.UNINITIALIZED
+        elif cmd_status == RepoStatus.COMMAND_ERROR:
+            status = ProjectStatus.UNKNOWN
 
         logging.info("Project '{}' status: {}".format(project["name"], status))
         return status
 
+    def _run_command_on_project(self, project, command):
+        """Run a single command on a project and get output"""
+        output = None
+        status = RepoStatus.OK
+
+        try:
+            cwd = os.getcwd()
+            logging.info("Changing path to '{}'".format(self.config.project_path + project["path"]))
+            os.chdir(self.config.project_path + project["path"])
+            logging.info("Running subprocess '{}'".format(command))
+            output = subprocess.check_output(command)
+            logging.info("Changing path back to '{}'".format(cwd))
+            os.chdir(cwd)
+        except OSError:
+            logging.info("Unable to access subproject: {}".format(e))
+            status = RepoStatus.OS_ERROR
+        except subprocess.CalledProcessError as e:
+            logging.info("Subprocess returned error: {}".format(e))
+            status = RepoStatus.COMMAND_ERROR
+
+        return status, output
+
 
 def main(argv):
     """Main function of repo tool"""
-    logging.basicConfig(stream=sys.stderr, level=logging.CRITICAL)
+    #TODO
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+    #logging.basicConfig(stream=sys.stderr, level=logging.CRITICAL)
 
     config = Config()
     ui = RepoCLI()
@@ -236,6 +272,8 @@ def main(argv):
             repo.ui.show("Initialization failed")
     elif repo.ui.command == 'status':
         repo.status()
+    elif repo.ui.command == 'update':
+        repo.update()
     else:
         return EXIT_FAILURE
 
