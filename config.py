@@ -11,7 +11,7 @@ class LocalConfigYaml(yaml.YAMLObject):
     yaml_tag = u'!repo.random.org,2019-03-02/config'
 
     def __init__(self, servers):
-        self.servers = None
+        self.servers = {}
         super(LocalConfigYaml, self).__init__()
 
     def __repr__(self):
@@ -22,8 +22,8 @@ class ProjectConfigYaml(yaml.YAMLObject):
     yaml_tag = u'!repo.random.org,2019-03-02/projects'
 
     def __init__(self, servers):
-        self.projects = None
-        super(LocalConfigYaml, self).__init__()
+        self.projects = {}
+        super(ProjectConfigYaml, self).__init__()
 
     def __repr__(self):
         return "{} (projects={}".format(self.__class__.__name__, self.projects)
@@ -57,11 +57,34 @@ class Config():
 
     def create_local_config(self):
         """Create an new local configuration file"""
-        pass
+        servers = []
+        self.local_config = LocalConfigYaml(servers)
+        try:
+            with open(self.local_config_file, 'w') as configuration_file:
+                yaml_data = yaml.dump(self.local_config,
+                                      default_flow_style=False,
+                                      explicit_start=True)
+                configuration_file.write(yaml_data)
+        except Exception:
+            logging.error("Error creating local configuration file")
+            return RepoStatus.CONFIGURATION_ERROR
+        return RepoStatus.OK
 
     def create_project_config(self):
         """Create an new project configuration file"""
-        pass
+        projects = []
+        self.project_path = "./"
+        self.project_config = ProjectConfigYaml(projects)
+        try:
+            with open(self.project_config_file, 'w') as configuration_file:
+                yaml_data = yaml.dump(self.project_config,
+                                      default_flow_style=False,
+                                      explicit_start=True)
+                configuration_file.write(yaml_data)
+        except Exception:
+            logging.error("Error creating project configuration file")
+            return RepoStatus.CONFIGURATION_ERROR
+        return RepoStatus.OK
 
     def read_local_configuration(self):
         """Read local configuration file"""

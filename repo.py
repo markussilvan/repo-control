@@ -112,18 +112,27 @@ class Repo():
         logging.info("Initializing repository")
 
         if self.config.project_config_exists() == False:
-            self.ui.show("Project configuration file doesn't exist")
-            self.config.create_project_config()
-            #TODO: error handling
+            self.ui.show("Project configuration file doesn't exist - creating")
+            status = self.config.create_project_config()
+            if status != RepoStatus.OK:
+                self.ui.show("Creating project configuration file failed")
+                return status
         else:
             self.ui.show("Project configuration file exists")
 
         if self.config.local_config_exists() == False:
-            self.ui.show("Local configuration file doesn't exist")
-            self.config.create_local_config()
-            #TODO: error handling
+            self.ui.show("Local configuration file doesn't exist - creating")
+            status = self.config.create_local_config()
+            if status != RepoStatus.OK:
+                self.ui.show("Creating local configuration file failed")
+                return status
         else:
             self.ui.show("Local configuration file exists")
+
+        if self.config.read_local_configuration() != RepoStatus.OK:
+            return RepoStatus.CONFIGURATION_ERROR
+        if self.config.read_project_configuration() != RepoStatus.OK:
+            return RepoStatus.CONFIGURATION_ERROR
 
         for project in self.config.project_config.projects:
             if project["path"] in [".", ""]:
@@ -177,7 +186,7 @@ class Repo():
 
     def _pull_project(self, project):
         """Update a single subproject"""
-        cmd_status, output = self._run_command_on_project(project, ["git", "pull"])
+        cmd_status, _ = self._run_command_on_project(project, ["git", "pull"])
         return cmd_status
         #TODO: add some checks first (or do them in update())
 
@@ -185,18 +194,14 @@ class Repo():
         """Clone a single subproject"""
         try:
             url = self._get_git_url(project)
-            logging.info("Cloning project '{}' from '{}'".format(project["name"], url))
-            output = subprocess.check_output(["git", "clone", url, project["path"]])
-            logging.info("Command output: {}".format(output))
         except KeyError as e:
-            logging.info("Configuration error: {}".format(e))
             return RepoStatus.CONFIGURATION_ERROR
-        except subprocess.CalledProcessError as e:
-            logging.info("Subprocess returned error: {}".format(e.errorcode))
-            logging.info("Subprocess command: {}".format(e.cmd))
-            logging.info("Subprocess output: {}".format(e.output))
-            return RepoStatus.GIT_ERROR
-        return RepoStatus.OK
+
+        command = ["git", "clone", url, project["path"]]
+        logging.info("Cloning project '{}' from '{}'".format(project["name"], url))
+        status, _ = self._run_command_on_project(project, command, False)
+
+        return status
 
     def _check_single_project_status(self, project):
         """Check status of a single (sub)project"""
@@ -216,24 +221,27 @@ class Repo():
         logging.info("Project '{}' status: {}".format(project["name"], status))
         return status
 
-    def _run_command_on_project(self, project, command):
+    def _run_command_on_project(self, project, command, change_dir=True):
         """Run a single command on a project and get output"""
         output = None
         status = RepoStatus.OK
 
         try:
             cwd = os.getcwd()
-            logging.info("Changing path to '{}'".format(self.config.project_path + project["path"]))
-            os.chdir(self.config.project_path + project["path"])
+            if change_dir:
+                logging.info("Changing path to '{}'".format(self.config.project_path + project["path"]))
+                os.chdir(self.config.project_path + project["path"])
             logging.info("Running subprocess '{}'".format(command))
             output = subprocess.check_output(command)
             logging.info("Changing path back to '{}'".format(cwd))
             os.chdir(cwd)
-        except OSError:
+        except OSError as e:
             logging.info("Unable to access subproject: {}".format(e))
             status = RepoStatus.OS_ERROR
         except subprocess.CalledProcessError as e:
-            logging.info("Subprocess returned error: {}".format(e))
+            logging.info("Subprocess returned error: {}".format(e.errorcode))
+            logging.info("Subprocess command: {}".format(e.cmd))
+            logging.info("Subprocess output: {}".format(e.output))
             status = RepoStatus.COMMAND_ERROR
 
         return status, output
@@ -241,9 +249,7 @@ class Repo():
 
 def main(argv):
     """Main function of repo tool"""
-    #TODO
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-    #logging.basicConfig(stream=sys.stderr, level=logging.CRITICAL)
+    logging.basicConfig(stream=sys.stderr, level=logging.CRITICAL)
 
     config = Config()
     ui = RepoCLI()
@@ -252,16 +258,13 @@ def main(argv):
     logging.info("Local configuration file exists: {}".format(config.local_config_exists()))
     logging.info("Project configuration file exists: {}".format(config.project_config_exists()))
 
-    if (config.local_config_exists() and config.project_config_exists()) == False:
-        print("Repo not initialized. Run 'repo init' to initialize")
-        return EXIT_FAILURE
-
-    if config.read_local_configuration() != RepoStatus.OK:
-        return EXIT_FAILURE
-    if config.read_project_configuration() != RepoStatus.OK:
-        return EXIT_FAILURE
-
     if repo.ui.parse_options(argv) != RepoStatus.OK:
+        return EXIT_FAILURE
+
+    if ((config.local_config_exists() == False) and
+        (config.project_config_exists() == False) and
+        (repo.ui.command != 'init')):
+        print("Repo not initialized. Run 'repo init' to initialize")
         return EXIT_FAILURE
 
     if repo.ui.command == 'init':
@@ -270,7 +273,13 @@ def main(argv):
             repo.ui.show("Done")
         else:
             repo.ui.show("Initialization failed")
-    elif repo.ui.command == 'status':
+
+    if config.read_local_configuration() != RepoStatus.OK:
+        return EXIT_FAILURE
+    if config.read_project_configuration() != RepoStatus.OK:
+        return EXIT_FAILURE
+
+    if repo.ui.command == 'status':
         repo.status()
     elif repo.ui.command == 'update':
         repo.update()
