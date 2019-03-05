@@ -25,10 +25,12 @@ class RepoCLI():
 
     def show_status(self, statuses):
         """Show combined project statuses"""
+        print("+" + "-" * 42 + "+" + "-" * 22 + "+")
         print("| {:<40} | {:<20} |".format("Project", "Status"))
-        print("-" * (60 + 7))
+        print("+" + "-" * 42 + "+" + "-" * 22 + "+")
         for status in statuses:
             print("| {:<40} | {:<20} |".format(status[0], status[1].name))
+        print("+" + "-" * 42 + "+" + "-" * 22 + "+")
 
     def usage(self):
         """List all available commands and options to the user"""
