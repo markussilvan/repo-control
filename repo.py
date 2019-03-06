@@ -147,8 +147,8 @@ class Repo():
                 continue
             status = self._clone_project(project)
             if status == RepoStatus.OK:
-                return RepoStatus.OK
-            if status == RepoStatus.CONFIGURATION_ERROR:
+                continue
+            elif status == RepoStatus.CONFIGURATION_ERROR:
                 self.ui.show("Cloning '{}' failed. Configuration error.".format(project["name"]))
                 return RepoStatus.CONFIGURATION_ERROR
             else:
