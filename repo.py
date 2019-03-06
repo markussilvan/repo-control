@@ -168,13 +168,8 @@ class Repo():
     def update(self):
         """Update (pull) all projects, including the top level repo and all subprojects"""
         #TODO: check preconditions, if status clean, correct branch, etc?
-        for project in self.config.project_config.projects:
-            self.ui.show("Updating project '{}'".format(project["name"]))
-            status = self._pull_project(project)
-            if status != RepoStatus.OK:
-                self.ui.show("Updating project '{}' failed".format(project["name"]))
-                return status
-        return RepoStatus.OK
+        self._fetch_all_projects()
+        self._merge_all_projects()
 
     def _get_git_url(self, project):
         git_server_alias = project["git_server_alias"]
@@ -186,11 +181,34 @@ class Repo():
         url = git_server + project["git_path"]
         return url
 
-    def _pull_project(self, project):
-        """Update a single subproject"""
-        cmd_status, _ = self._run_command_on_project(project, ["git", "pull"])
+    def _merge_all_projects(self):
+        for project in self.config.project_config.projects:
+            self.ui.show("Updating project '{}'".format(project["name"]))
+            status = self._merge_project(project)
+            if status != RepoStatus.OK:
+                self.ui.show("Updating project '{}' failed".format(project["name"]))
+                return status
+        return RepoStatus.OK
+
+    def _fetch_all_projects(self):
+        """Fetch all projects from the server"""
+        for project in self.config.project_config.projects:
+            self.ui.show("Fetching project '{}'".format(project["name"]))
+            status = self._fetch_project(project)
+            if status != RepoStatus.OK:
+                self.ui.show("Fetching project '{}' failed".format(project["name"]))
+                return status
+        return RepoStatus.OK
+
+    def _fetch_project(self, project):
+        """Fetch a single subproject from the server"""
+        cmd_status, _ = self._run_command_on_project(project, ["git", "fetch"])
         return cmd_status
-        #TODO: add some checks first (or do them in update())
+
+    def _merge_project(self, project):
+        """Fetch a single subproject from the server"""
+        cmd_status, _ = self._run_command_on_project(project, ["git", "merge"])
+        return cmd_status
 
     def _clone_project(self, project):
         """Clone a single subproject"""
@@ -241,7 +259,6 @@ class Repo():
             logging.info("Unable to access subproject: {}".format(e))
             status = RepoStatus.OS_ERROR
         except subprocess.CalledProcessError as e:
-            logging.info("Subprocess returned error: {}".format(e.errorcode))
             logging.info("Subprocess command: {}".format(e.cmd))
             logging.info("Subprocess output: {}".format(e.output))
             status = RepoStatus.COMMAND_ERROR

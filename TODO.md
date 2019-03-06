@@ -1,6 +1,6 @@
 # TODO
 
-  - check some preconditions before executing update()
+  - check some preconditions before executing update() / pull / fetch
   - improve create_local_config() and create_project_config()?
   - commands
     - initialize or init
