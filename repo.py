@@ -238,6 +238,20 @@ class Repo():
         elif cmd_status == RepoStatus.COMMAND_ERROR:
             status = ProjectStatus.UNKNOWN
 
+        if status == ProjectStatus.CLEAN:
+            command = ["git", "rev-list", "--left-right", "--count", "@...HEAD@{upstream}"]
+            cmd_status, output = self._run_command_on_project(project, command)
+            if cmd_status == RepoStatus.OK:
+                split = output.split()
+                if int(split[0]) != 0 and int(split[1]) != 0:
+                    status = ProjectStatus.OUT_OF_SYNC
+                elif int(split[0]) != 0:
+                    status = ProjectStatus.AHEAD
+                elif int(split[1]) != 0:
+                    status = ProjectStatus.BEHING
+            else:
+                self.ui.show("Checking status for project '{}' failed".format(project["name"]))
+
         logging.info("Project '{}' status: {}".format(project["name"], status))
         return status
 

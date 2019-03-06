@@ -1,6 +1,7 @@
 # TODO
 
-  - check some preconditions before executing update() / pull / fetch
+  - [list of git commands](https://git-scm.com/docs/git#_low-level_commands_%28plumbing%29)
+  - check some preconditions before executing update() / fetch / merge
   - improve create_local_config() and create_project_config()?
   - commands
     - initialize or init
@@ -8,7 +9,7 @@
         - newly created file should have an example of proper configuration (in comments)
       - support --force, with confirmation, to recreate all projects (rm & clone)
     - status
-      - SHOW A DIFFERENT STATUS IF BRANCH IS BEHIND OR AHEAD OF REMOTE
+      - do fetch? or suggest fetch? or implement fetch as a separate command?
       - also check that source is on master branch?
       - a separate command or option to list projects and branches they are on
         - or even do that by default?
@@ -28,3 +29,8 @@
     - server add, remove
       - abort if configuration error (suggest init)
       - new server alias, don't allow duplicates
+    - extra commands
+      - add tag to all or selected repositories (for example for a release)
+      - support branches
+        - add active branches to configuration
+        - change/ checkout / create branches

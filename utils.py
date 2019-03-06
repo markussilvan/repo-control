@@ -15,6 +15,9 @@ class ProjectStatus(Enum):
     CHANGES = 1
     UNINITIALIZED = 2
     UNKNOWN = 3
+    OUT_OF_SYNC = 4
+    AHEAD = 5
+    BEHIND = 6
 
 class RepoStatus(Enum):
     OK = 0
