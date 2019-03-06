@@ -36,8 +36,9 @@ class RepoCLI():
         """List all available commands and options to the user"""
         print("Commands:")
         print("  help                   show this help")
-        print("  status                 get combined repository status")
         print("  init                   initialize database")
+        print("  status                 get combined repository status")
+        print("  fetch                  fetch from remotes of all repositories")
         print("  update                 update all repositories")
         print("")
 
@@ -46,6 +47,7 @@ class RepoCLI():
 
         all_commands = ["status",
                         "init",
+                        "fetch",
                         "update"]
         short_options = "hd"
         long_options = ["help", "debug"]
@@ -164,6 +166,10 @@ class Repo():
             statuses.append((project["name"], status))
         self.ui.show_status(statuses)
         return statuses
+
+    def fetch(self):
+        """Fetch from remotes of all projects"""
+        self._fetch_all_projects()
 
     def update(self):
         """Update (pull) all projects, including the top level repo and all subprojects"""
@@ -314,6 +320,8 @@ def main(argv):
 
     if repo.ui.command == 'status':
         repo.status()
+    elif repo.ui.command == 'fetch':
+        repo.fetch()
     elif repo.ui.command == 'update':
         repo.update()
     else:

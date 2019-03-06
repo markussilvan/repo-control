@@ -4,12 +4,11 @@
   - check some preconditions before executing update() / fetch / merge
   - improve create_local_config() and create_project_config()?
   - commands
-    - initialize or init
-      - create templates for new configuration files, if missing
-        - newly created file should have an example of proper configuration (in comments)
+    - init
+      - newly created file should have an example of proper configuration (in comments)
       - support --force, with confirmation, to recreate all projects (rm & clone)
     - status
-      - do fetch? or suggest fetch? or implement fetch as a separate command?
+      - add support for --fetch?
       - also check that source is on master branch?
       - a separate command or option to list projects and branches they are on
         - or even do that by default?
@@ -29,8 +28,12 @@
     - server add, remove
       - abort if configuration error (suggest init)
       - new server alias, don't allow duplicates
-    - extra commands
+    - other commands
       - add tag to all or selected repositories (for example for a release)
-      - support branches
-        - add active branches to configuration
-        - change/ checkout / create branches
+    - support branches
+      - add active branches to configuration
+      - change/ checkout / create branches
+    - use one ssh tunnel instead of opening a new connection for each project/command
+    - integrate with ssh-agent, or add a separate script for running the agent?
+      - or `repo start` to run ssh-agent with configured parameters?
+      - put key locations etc to local configuration?
