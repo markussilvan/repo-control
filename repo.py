@@ -254,7 +254,7 @@ class Repo():
                 elif int(split[0]) != 0:
                     status = ProjectStatus.AHEAD
                 elif int(split[1]) != 0:
-                    status = ProjectStatus.BEHING
+                    status = ProjectStatus.BEHIND
             else:
                 self.ui.show("Checking status for project '{}' failed".format(project["name"]))
 

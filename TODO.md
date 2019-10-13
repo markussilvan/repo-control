@@ -3,12 +3,12 @@
   - [list of git commands](https://git-scm.com/docs/git#_low-level_commands_%28plumbing%29)
   - check some preconditions before executing update() / fetch / merge
   - improve create_local_config() and create_project_config()?
+  - remove "name" from projects and just use path instead or make name optional
   - commands
     - init
       - newly created file should have an example of proper configuration (in comments)
       - support --force, with confirmation, to recreate all projects (rm & clone)
     - status
-      - add support for --fetch?
       - also check that source is on master branch?
       - a separate command or option to list projects and branches they are on
         - or even do that by default?
@@ -24,7 +24,7 @@
         - abort if server alias doens't exist
       - add new subprojects to configuration
       - add new subprojects to .gitignore automatically
-      - only write config file after successful cloning
+      - only add to config / write config file after successful cloning
     - server add, remove
       - abort if configuration error (suggest init)
       - new server alias, don't allow duplicates
