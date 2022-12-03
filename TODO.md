@@ -2,6 +2,8 @@
 
   - [list of git commands](https://git-scm.com/docs/git#_low-level_commands_%28plumbing%29)
   - check some preconditions before executing update() / fetch / merge
+    - for example, if status is not clean, don't try to update
+      - print some sensible mesasge, if CHANGES / AHEAD, but origin has new commits
   - improve create_local_config() and create_project_config()?
   - remove "name" from projects and just use path instead or make name optional
   - commands
