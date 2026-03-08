@@ -9,7 +9,7 @@ use std::process;
 use clap::Parser;
 use log::LevelFilter;
 
-use cli::{Cli, Commands};
+use cli::{Cli, Commands, ProjectCommands, ServerCommands};
 use config::ConfigManager;
 
 fn main() {
@@ -47,6 +47,20 @@ fn main() {
                 Commands::Status => commands::status::run(&config),
                 Commands::Fetch => commands::fetch::run(&config),
                 Commands::Update => commands::update::run(&config),
+                Commands::Project { subcommand } => match subcommand {
+                    ProjectCommands::List => commands::project::run_list(&config),
+                    ProjectCommands::Add => commands::project::run_add(&mut config),
+                    ProjectCommands::Remove { path } => {
+                        commands::project::run_remove(&mut config, path)
+                    }
+                },
+                Commands::Server { subcommand } => match subcommand {
+                    ServerCommands::List => commands::server::run_list(&config),
+                    ServerCommands::Add => commands::server::run_add(&mut config),
+                    ServerCommands::Remove { alias } => {
+                        commands::server::run_remove(&mut config, alias)
+                    }
+                },
                 Commands::Init => unreachable!(),
             }
         }

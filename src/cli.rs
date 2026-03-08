@@ -22,6 +22,42 @@ pub enum Commands {
     Fetch,
     /// Update all repositories
     Update,
+    /// Manage configured projects
+    Project {
+        #[command(subcommand)]
+        subcommand: ProjectCommands,
+    },
+    /// Manage configured server aliases
+    Server {
+        #[command(subcommand)]
+        subcommand: ServerCommands,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum ProjectCommands {
+    /// Add a new project interactively
+    Add,
+    /// Remove a project by local path
+    Remove {
+        /// Local path of the project to remove (prompted if omitted)
+        path: Option<String>,
+    },
+    /// List all configured projects
+    List,
+}
+
+#[derive(Subcommand)]
+pub enum ServerCommands {
+    /// List all configured server aliases
+    List,
+    /// Add a new server alias interactively
+    Add,
+    /// Remove a server alias
+    Remove {
+        /// Alias of the server to remove (prompted if omitted)
+        alias: Option<String>,
+    },
 }
 
 pub fn show_status_table(statuses: &[(String, ProjectStatus)]) {

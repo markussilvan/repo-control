@@ -128,6 +128,28 @@ impl ConfigManager {
         Ok(())
     }
 
+    pub fn save_local_config(&self) -> Result<(), RepoError> {
+        let path = self.project_root.join(Self::LOCAL_CONFIG);
+        let lc = self
+            .local_config
+            .as_ref()
+            .ok_or_else(|| RepoError::Config("Local config not loaded".into()))?;
+        let yaml = serde_yaml::to_string(lc)?;
+        fs::write(&path, yaml)?;
+        Ok(())
+    }
+
+    pub fn save_projects_config(&self) -> Result<(), RepoError> {
+        let path = self.project_root.join(Self::PROJECTS_CONFIG);
+        let pc = self
+            .projects_config
+            .as_ref()
+            .ok_or_else(|| RepoError::Config("Projects config not loaded".into()))?;
+        let yaml = serde_yaml::to_string(pc)?;
+        fs::write(&path, yaml)?;
+        Ok(())
+    }
+
     pub fn get_server_url(&self, alias: &str) -> Result<String, RepoError> {
         let lc = self
             .local_config
