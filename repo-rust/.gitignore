@@ -1,5 +1,0 @@
-# Ignore some files used for testing
-.repo.yaml
-projects.yaml
-rust-bevy-wasm-snake/
-target/

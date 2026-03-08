@@ -1,1 +1,7 @@
-repo-python/__pycache__/
+# Ignore some files used for testing
+.repo.yaml
+projects.yaml
+rust-bevy-wasm-snake/
+
+# Ignore build files
+target/
