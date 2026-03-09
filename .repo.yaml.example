@@ -1,8 +1,0 @@
---- !repo.random.org,2019-03-02/config
-servers:
-    - alias: "nitro"
-      server: "file://"
-    - alias: "forgejo"
-      server: "http://forgejo.nitro.local:3000"
-    - alias: "github"
-      server: "ssh://github.com"
