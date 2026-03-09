@@ -2,6 +2,14 @@
 name = "repo-control"
 version = "0.1.0"
 edition = "2024"
+description = "A helper for managing multiple git repositories"
+readme = "README.md"
+homepage = "https://github.com/markussilvan/repo-control"
+repository = "https://github.com/markussilvan/repo-control"
+authors = ["Markus Silván"]
+license = "MIT"
+keywords = ["git", "repository", "repositories", "control"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
 name = "repo"
