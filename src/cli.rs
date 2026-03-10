@@ -55,6 +55,11 @@ pub enum ServerCommands {
         /// Alias of the server to remove (prompted if omitted)
         alias: Option<String>,
     },
+    /// Edit an existing server alias and/or URL interactively
+    Edit {
+        /// Alias of the server to edit (prompted if omitted)
+        alias: Option<String>,
+    },
 }
 
 pub fn show_status_table(statuses: &[(String, ProjectStatus)]) {

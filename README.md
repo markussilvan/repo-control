@@ -114,4 +114,10 @@ Manages Git server aliases in `.repo.yaml`.
 repo server list               # List all configured server aliases
 repo server add                # Add a new server alias interactively
 repo server remove [alias]     # Remove a server alias (prompted if omitted)
+repo server edit [alias]       # Edit a server alias and/or URL (prompted if omitted)
 ```
+
+`repo server edit` updates the alias and/or URL of an existing server. Press
+Enter to keep the current value for either field. If the server URL changed,
+you will be asked whether to update the `origin` remote in all affected local
+repositories automatically.

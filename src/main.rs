@@ -49,6 +49,7 @@ fn main() {
             ServerCommands::List => commands::server::run_list(&config),
             ServerCommands::Add => commands::server::run_add(&mut config),
             ServerCommands::Remove { alias } => commands::server::run_remove(&mut config, alias),
+            ServerCommands::Edit { alias } => commands::server::run_edit(&mut config, alias),
         },
     }
 }
