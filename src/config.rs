@@ -1,11 +1,24 @@
 use std::fs;
-use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::error::RepoError;
+
+#[cfg(unix)]
+fn device_id(path: &Path) -> Option<u64> {
+    use std::os::unix::fs::MetadataExt;
+    Some(fs::metadata(path).ok()?.dev())
+}
+
+#[cfg(windows)]
+fn device_id(_path: &Path) -> Option<u64> {
+    // volume_serial_number() requires an unstable feature (rust-lang/rust#63010).
+    // Returning a constant disables cross-volume boundary detection, but traversal
+    // still terminates correctly when parent == path at the filesystem root.
+    Some(0)
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Server {
@@ -58,7 +71,7 @@ impl ConfigManager {
 
     pub fn find_root(start: &Path) -> Option<PathBuf> {
         let start = start.canonicalize().ok()?;
-        let start_dev = fs::metadata(&start).ok()?.dev();
+        let start_dev = device_id(&start)?;
 
         let mut path = start.clone();
         loop {
@@ -69,7 +82,7 @@ impl ConfigManager {
             let parent = path.parent()?;
 
             // Stop at device boundary
-            let parent_dev = fs::metadata(parent).ok()?.dev();
+            let parent_dev = device_id(parent)?;
             if parent_dev != start_dev {
                 return None;
             }
