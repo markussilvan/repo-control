@@ -7,21 +7,14 @@ mod git;
 use std::process;
 
 use clap::Parser;
-use log::LevelFilter;
 
 use cli::{Cli, Commands, ProjectCommands, ServerCommands};
 use config::ConfigManager;
 
 fn main() {
+    tracing_subscriber::fmt::init();
+
     let cli = Cli::parse();
-
-    let level = if cli.debug {
-        LevelFilter::Debug
-    } else {
-        LevelFilter::Warn
-    };
-    env_logger::Builder::new().filter_level(level).init();
-
     let mut config = ConfigManager::new();
 
     match cli.command {

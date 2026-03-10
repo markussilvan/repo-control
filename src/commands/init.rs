@@ -1,3 +1,5 @@
+use tracing::info;
+
 use crate::config::ConfigManager;
 use crate::git;
 
@@ -39,7 +41,7 @@ pub fn run(config: &mut ConfigManager) {
 
     for project in &projects {
         if project.is_root() {
-            log::info!("Skipping root project: '{}'", project.name);
+            info!("Skipping root project: '{}'", project.name);
             continue;
         }
 
@@ -57,7 +59,7 @@ pub fn run(config: &mut ConfigManager) {
             }
         };
 
-        log::info!("Cloning project '{}' from '{}'", project.name, url);
+        info!("Cloning project '{}' from '{}'", project.name, url);
         if let Err(e) = git::clone(&url, &project.path, &config.project_root) {
             println!("Error cloning project '{}': {}", project.name, e);
             return;

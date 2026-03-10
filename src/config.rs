@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 use crate::error::RepoError;
 
@@ -115,7 +116,7 @@ impl ConfigManager {
 
     pub fn read_local_config(&mut self) -> Result<(), RepoError> {
         let path = self.project_root.join(Self::LOCAL_CONFIG);
-        log::debug!("Loading local config from {}", path.display());
+        debug!("Loading local config from {}", path.display());
         let contents = fs::read_to_string(&path)?;
         self.local_config = Some(load_yaml(&contents)?);
         Ok(())
@@ -123,7 +124,7 @@ impl ConfigManager {
 
     pub fn read_projects_config(&mut self) -> Result<(), RepoError> {
         let path = self.project_root.join(Self::PROJECTS_CONFIG);
-        log::debug!("Loading projects config from {}", path.display());
+        debug!("Loading projects config from {}", path.display());
         let contents = fs::read_to_string(&path)?;
         self.projects_config = Some(load_yaml(&contents)?);
         Ok(())

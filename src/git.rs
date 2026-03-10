@@ -1,10 +1,12 @@
 use std::path::Path;
 use std::process::Command;
 
+use tracing::{debug, info, warn};
+
 use crate::error::{ProjectStatus, RepoError};
 
 pub fn run_git(dir: &Path, args: &[&str]) -> Result<Vec<u8>, RepoError> {
-    log::debug!("Running git {:?} in {}", args, dir.display());
+    debug!("Running git {:?} in {}", args, dir.display());
     let output = Command::new("git")
         .args(args)
         .current_dir(dir)
@@ -26,7 +28,7 @@ pub fn run_git(dir: &Path, args: &[&str]) -> Result<Vec<u8>, RepoError> {
 }
 
 pub fn clone(url: &str, dest_name: &str, working_dir: &Path) -> Result<(), RepoError> {
-    log::info!("Cloning '{}' into '{}'", url, dest_name);
+    info!("Cloning '{}' into '{}'", url, dest_name);
     let output = Command::new("git")
         .args(["clone", url, dest_name])
         .current_dir(working_dir)
@@ -77,12 +79,12 @@ pub fn check_project_status(dir: &Path) -> ProjectStatus {
                     _ => ProjectStatus::Clean,
                 }
             } else {
-                log::warn!("Unexpected rev-list output: {:?}", s);
+                warn!("Unexpected rev-list output: {:?}", s);
                 ProjectStatus::Unknown
             }
         }
         Err(e) => {
-            log::warn!("rev-list failed for {}: {}", dir.display(), e);
+            warn!("rev-list failed for {}: {}", dir.display(), e);
             ProjectStatus::Unknown
         }
     }

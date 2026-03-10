@@ -5,9 +5,6 @@ use crate::error::ProjectStatus;
 #[derive(Parser)]
 #[command(name = "repo", about = "Git workarea management tool")]
 pub struct Cli {
-    #[arg(short, long, global = true)]
-    pub debug: bool,
-
     #[command(subcommand)]
     pub command: Commands,
 }

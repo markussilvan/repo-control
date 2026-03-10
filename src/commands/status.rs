@@ -1,3 +1,5 @@
+use tracing::info;
+
 use crate::cli::show_status_table;
 use crate::config::ConfigManager;
 use crate::git::check_project_status;
@@ -16,7 +18,7 @@ pub fn run(config: &ConfigManager) {
         .map(|p| {
             let dir = config.project_dir(p);
             let status = check_project_status(&dir);
-            log::info!("Project '{}' status: {}", p.name, status);
+            info!("Project '{}' status: {}", p.name, status);
             (p.name.clone(), status)
         })
         .collect();

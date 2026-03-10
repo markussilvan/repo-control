@@ -115,9 +115,3 @@ repo server list               # List all configured server aliases
 repo server add                # Add a new server alias interactively
 repo server remove [alias]     # Remove a server alias (prompted if omitted)
 ```
-
-## Global Flags
-
-| Flag            | Description          |
-|-----------------|----------------------|
-| `-d`, `--debug` | Enable debug logging |
