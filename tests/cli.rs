@@ -108,6 +108,41 @@ fn project_list_shows_multiple_projects() {
         .stdout(predicate::str::contains("beta"));
 }
 
+// --- project add ---
+
+#[test]
+fn project_add_writes_to_config() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_local_config(r#"{"servers":[{"alias":"origin","server":"ssh://git@example.com"}]}"#);
+    ws.cmd()
+        .args(["project", "add"])
+        .write_stdin("myproject\norigin\n/myproject.git\nmyproject\n")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Project added."));
+    let config = std::fs::read_to_string(ws.path().join("projects.json")).unwrap();
+    assert!(config.contains("myproject"));
+    assert!(config.contains("origin"));
+    assert!(config.contains("/myproject.git"));
+}
+
+// --- project remove ---
+
+#[test]
+fn project_remove_updates_config() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_projects_config(
+        r#"{"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/myproject.git","path":"myproject"}]}"#,
+    );
+    ws.cmd()
+        .args(["project", "remove", "myproject"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Project with path 'myproject' removed."));
+    let config = std::fs::read_to_string(ws.path().join("projects.json")).unwrap();
+    assert!(!config.contains("myproject"));
+}
+
 // --- status ---
 
 #[test]
