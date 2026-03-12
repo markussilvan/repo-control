@@ -3,8 +3,10 @@ use clap::{Parser, Subcommand};
 use crate::error::ProjectStatus;
 
 #[derive(Parser)]
-#[command(name = "repo", about = "Git workarea management tool")]
+#[command(name = "repo", about = "Git workarea management tool", version = env!("CARGO_PKG_VERSION"), disable_version_flag = true)]
 pub struct Cli {
+    #[arg(short = 'v', long = "version", action = clap::ArgAction::Version)]
+    _version: (),
     #[command(subcommand)]
     pub command: Commands,
 }
