@@ -15,7 +15,9 @@ Run `repo` from anywhere inside the workspace.
 
 ## Configuration
 
-**.repo.json**, defines used Git servers (machine-local, not checked in):
+### **.repo.json**
+
+It defines used Git servers (machine-local, not checked in):
 
 ```json
 {
@@ -28,10 +30,37 @@ Run `repo` from anywhere inside the workspace.
 }
 ```
 
-- **`autoignore`** — when a project is added, its local path is appended to `.gitignore` in the workspace root (skipped if already present). Defaults to `false`.
-- **`autocommit`** — after a project is added or removed, the changed files are staged and committed in the workspace root repo. Defaults to `false`.
+#### **`autoignore`**
 
-**projects.json**, defines the repositories to manage:
+When a project is added, its local path is appended to `.gitignore` in the
+workspace root (skipped if already present). Defaults to `false`.
+
+#### **`autocommit`**
+
+After a project is added or removed, the changed files are staged and committed
+in the workspace root repo. Defaults to `false`.
+
+```
+┌────────────────┬────────────┬────────────┬────────────────────────────────────────────────┐
+│    Scenario    │ autoignore │ autocommit │                     Result                     │
+├────────────────┼────────────┼────────────┼────────────────────────────────────────────────┤
+│ project add    │ false      │ false      │ only projects.json updated (current behaviour) │
+├────────────────┼────────────┼────────────┼────────────────────────────────────────────────┤
+│ project add    │ true       │ false      │ projects.json + .gitignore updated, no commit  │
+├────────────────┼────────────┼────────────┼────────────────────────────────────────────────┤
+│ project add    │ false      │ true       │ projects.json updated, commit with that file   │
+├────────────────┼────────────┼────────────┼────────────────────────────────────────────────┤
+│ project add    │ true       │ true       │ both files updated, commit includes both       │
+├────────────────┼────────────┼────────────┼────────────────────────────────────────────────┤
+│ project remove │ —          │ false      │ only projects.json updated (current behaviour) │
+├────────────────┼────────────┼────────────┼────────────────────────────────────────────────┤
+│ project remove │ —          │ true       │ projects.json updated, commit with that file   │
+└────────────────┴────────────┴────────────┴────────────────────────────────────────────────┘
+```
+
+### **projects.json**
+
+It defines the repositories to manage:
 
 ```json
 {
