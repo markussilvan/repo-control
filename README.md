@@ -22,9 +22,14 @@ Run `repo` from anywhere inside the workspace.
   "servers": [
     { "alias": "github", "server": "ssh://git@github.com" },
     { "alias": "homelab", "server": "https://homelab.local" }
-  ]
+  ],
+  "autoignore": true,
+  "autocommit": true
 }
 ```
+
+- **`autoignore`** — when a project is added, its local path is appended to `.gitignore` in the workspace root (skipped if already present). Defaults to `false`.
+- **`autocommit`** — after a project is added or removed, the changed files are staged and committed in the workspace root repo. Defaults to `false`.
 
 **projects.json**, defines the repositories to manage:
 

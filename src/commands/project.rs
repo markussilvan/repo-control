@@ -1,6 +1,8 @@
+use std::fs;
 use std::io::{self, BufRead, Write};
 
 use crate::config::{ConfigManager, Project};
+use crate::git;
 
 pub fn run_list(config: &ConfigManager) {
     let projects = match config.projects_config.as_ref() {
@@ -41,10 +43,10 @@ pub fn run_add(config: &mut ConfigManager) {
     }
 
     let project = Project {
-        name,
+        name: name.clone(),
         git_server_alias: server_alias,
         git_path,
-        path: local_path,
+        path: local_path.clone(),
     };
     let pc = match config.projects_config.as_mut() {
         Some(pc) => pc,
@@ -59,6 +61,47 @@ pub fn run_add(config: &mut ConfigManager) {
         eprintln!("Failed to save projects config: {}", e);
         return;
     }
+
+    let (autoignore, autocommit) = config
+        .local_config
+        .as_ref()
+        .map(|lc| (lc.autoignore, lc.autocommit))
+        .unwrap_or((false, false));
+
+    if autoignore {
+        let gitignore_path = config.project_root.join(".gitignore");
+        let existing = fs::read_to_string(&gitignore_path).unwrap_or_default();
+        let already_present = existing.lines().any(|l| l == local_path);
+        if !already_present {
+            let mut content = existing;
+            if !content.is_empty() && !content.ends_with('\n') {
+                content.push('\n');
+            }
+            content.push_str(&local_path);
+            content.push('\n');
+            if let Err(e) = fs::write(&gitignore_path, &content) {
+                eprintln!("Warning: failed to update .gitignore: {}", e);
+            }
+        }
+    }
+
+    if autocommit {
+        let mut files = vec!["projects.json"];
+        if autoignore {
+            files.push(".gitignore");
+        }
+        let mut add_args = vec!["add"];
+        add_args.extend_from_slice(&files);
+        if let Err(e) = git::run_git(&config.project_root, &add_args) {
+            eprintln!("Warning: git add failed: {}", e);
+        } else {
+            let msg = format!("repo: add project {}", name);
+            if let Err(e) = git::run_git(&config.project_root, &["commit", "-m", &msg]) {
+                eprintln!("Warning: git commit failed: {}", e);
+            }
+        }
+    }
+
     println!("Project added.");
 }
 
@@ -88,6 +131,24 @@ pub fn run_remove(config: &mut ConfigManager, path: Option<String>) {
         eprintln!("Failed to save projects config: {}", e);
         return;
     }
+
+    let autocommit = config
+        .local_config
+        .as_ref()
+        .map(|lc| lc.autocommit)
+        .unwrap_or(false);
+
+    if autocommit {
+        if let Err(e) = git::run_git(&config.project_root, &["add", "projects.json"]) {
+            eprintln!("Warning: git add failed: {}", e);
+        } else {
+            let msg = format!("repo: remove project {}", target_path);
+            if let Err(e) = git::run_git(&config.project_root, &["commit", "-m", &msg]) {
+                eprintln!("Warning: git commit failed: {}", e);
+            }
+        }
+    }
+
     println!("Project with path '{}' removed.", target_path);
 }
 

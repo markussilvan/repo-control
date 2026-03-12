@@ -43,6 +43,10 @@ impl Project {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LocalConfig {
     pub servers: Vec<Server>,
+    #[serde(default)]
+    pub autocommit: bool,
+    #[serde(default)]
+    pub autoignore: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -126,7 +130,8 @@ impl ConfigManager {
 
     pub fn create_local_config(&self) -> Result<(), RepoError> {
         let path = self.project_root.join(Self::LOCAL_CONFIG);
-        fs::write(&path, "{\"servers\": []}\n")?;
+        let default = LocalConfig { servers: vec![], autocommit: false, autoignore: false };
+        fs::write(&path, serde_json::to_string_pretty(&default)?)?;
         Ok(())
     }
 
