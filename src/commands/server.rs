@@ -1,5 +1,6 @@
 use std::io::{self, BufRead, Write};
 
+use crate::cli::show_server_table;
 use crate::config::{ConfigManager, Server};
 use crate::git;
 
@@ -15,11 +16,8 @@ pub fn run_list(config: &ConfigManager) {
         println!("No servers configured.");
         return;
     }
-    println!("{:<30} {}", "Alias", "URL");
-    println!("{}", "-".repeat(70));
-    for s in servers {
-        println!("{:<30} {}", s.alias, s.server);
-    }
+    let rows: Vec<(String, String)> = servers.iter().map(|s| (s.alias.clone(), s.server.clone())).collect();
+    show_server_table(&rows);
 }
 
 pub fn run_add(config: &mut ConfigManager) {

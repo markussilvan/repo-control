@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::{self, BufRead, Write};
 
+use crate::cli::show_projects_table;
 use crate::config::{ConfigManager, Project};
 use crate::git;
 
@@ -16,17 +17,11 @@ pub fn run_list(config: &ConfigManager) {
         println!("No projects configured.");
         return;
     }
-    println!(
-        "{:<40} {:<20} {:<40} {}",
-        "Name", "Server Alias", "Git Path", "Local Path"
-    );
-    println!("{}", "-".repeat(110));
-    for p in projects {
-        println!(
-            "{:<40} {:<20} {:<40} {}",
-            p.name, p.git_server_alias, p.git_path, p.path
-        );
-    }
+    let rows: Vec<(String, String, String, String)> = projects
+        .iter()
+        .map(|p| (p.name.clone(), p.git_server_alias.clone(), p.git_path.clone(), p.path.clone()))
+        .collect();
+    show_projects_table(&rows);
 }
 
 pub fn run_add(config: &mut ConfigManager) {
