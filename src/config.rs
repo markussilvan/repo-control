@@ -1,7 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
@@ -51,13 +50,8 @@ pub struct ProjectsConfig {
     pub projects: Vec<Project>,
 }
 
-fn load_yaml<T: DeserializeOwned>(yaml_str: &str) -> Result<T, RepoError> {
-    let value: serde_yaml::Value = serde_yaml::from_str(yaml_str)?;
-    let inner = match value {
-        serde_yaml::Value::Tagged(t) => t.value,
-        other => other,
-    };
-    serde_yaml::from_value(inner).map_err(RepoError::Yaml)
+fn load_json<T: serde::de::DeserializeOwned>(json_str: &str) -> Result<T, RepoError> {
+    serde_json::from_str(json_str).map_err(RepoError::Json)
 }
 
 pub struct ConfigManager {
@@ -67,8 +61,8 @@ pub struct ConfigManager {
 }
 
 impl ConfigManager {
-    const LOCAL_CONFIG: &'static str = ".repo.yaml";
-    const PROJECTS_CONFIG: &'static str = "projects.yaml";
+    const LOCAL_CONFIG: &'static str = ".repo.json";
+    const PROJECTS_CONFIG: &'static str = "projects.json";
 
     pub fn find_root(start: &Path) -> Option<PathBuf> {
         let start = start.canonicalize().ok()?;
@@ -118,7 +112,7 @@ impl ConfigManager {
         let path = self.project_root.join(Self::LOCAL_CONFIG);
         debug!("Loading local config from {}", path.display());
         let contents = fs::read_to_string(&path)?;
-        self.local_config = Some(load_yaml(&contents)?);
+        self.local_config = Some(load_json(&contents)?);
         Ok(())
     }
 
@@ -126,19 +120,19 @@ impl ConfigManager {
         let path = self.project_root.join(Self::PROJECTS_CONFIG);
         debug!("Loading projects config from {}", path.display());
         let contents = fs::read_to_string(&path)?;
-        self.projects_config = Some(load_yaml(&contents)?);
+        self.projects_config = Some(load_json(&contents)?);
         Ok(())
     }
 
     pub fn create_local_config(&self) -> Result<(), RepoError> {
         let path = self.project_root.join(Self::LOCAL_CONFIG);
-        fs::write(&path, "servers: []\n")?;
+        fs::write(&path, "{\"servers\": []}\n")?;
         Ok(())
     }
 
     pub fn create_projects_config(&self) -> Result<(), RepoError> {
         let path = self.project_root.join(Self::PROJECTS_CONFIG);
-        fs::write(&path, "projects: []\n")?;
+        fs::write(&path, "{\"projects\": []}\n")?;
         Ok(())
     }
 
@@ -148,8 +142,8 @@ impl ConfigManager {
             .local_config
             .as_ref()
             .ok_or_else(|| RepoError::Config("Local config not loaded".into()))?;
-        let yaml = serde_yaml::to_string(lc)?;
-        fs::write(&path, yaml)?;
+        let json = serde_json::to_string_pretty(lc)?;
+        fs::write(&path, json)?;
         Ok(())
     }
 
@@ -159,8 +153,8 @@ impl ConfigManager {
             .projects_config
             .as_ref()
             .ok_or_else(|| RepoError::Config("Projects config not loaded".into()))?;
-        let yaml = serde_yaml::to_string(pc)?;
-        fs::write(&path, yaml)?;
+        let json = serde_json::to_string_pretty(pc)?;
+        fs::write(&path, json)?;
         Ok(())
     }
 
