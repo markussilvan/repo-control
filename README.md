@@ -4,14 +4,24 @@ A CLI tool for managing multiple Git repositories at once. Define a workspace
 with a list of projects and Git servers, then clone, inspect, and update all
 repos with a single command.
 
+## Installation
+
+With Cargo: `cargo install repo-control`
+
+With Cargo binstall: `cargo binstall repo-control`
+
 ## How It Works
 
 Two configuration files are needed. A `.repo.json` for your local
 configuration and `projects.json` to define your projects.
+Running `repo init` will create placeholder configurations, if none are found
+in the directory tree.
 
 Place a `.repo.json` file in your workspace root to mark it and define used
 Git servers. Add a `projects.json` to list the repositories you want to manage.
 Run `repo` from anywhere inside the workspace.
+
+The files can be either edited manually or with `repo` commands.
 
 ## Configuration
 
