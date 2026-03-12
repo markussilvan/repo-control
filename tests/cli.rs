@@ -48,6 +48,37 @@ fn server_list_shows_configured_servers() {
         .stdout(predicate::str::contains("ssh://git@example.com"));
 }
 
+// --- server add ---
+
+#[test]
+fn server_add_writes_to_config() {
+    let ws = TestWorkspace::new_initialized();
+    ws.cmd()
+        .args(["server", "add"])
+        .write_stdin("origin\nssh://git@example.com\n")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Server added."));
+    let config = std::fs::read_to_string(ws.path().join(".repo.json")).unwrap();
+    assert!(config.contains("origin"));
+    assert!(config.contains("ssh://git@example.com"));
+}
+
+// --- server remove ---
+
+#[test]
+fn server_remove_updates_config() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_local_config(r#"{"servers":[{"alias":"origin","server":"ssh://git@example.com"}]}"#);
+    ws.cmd()
+        .args(["server", "remove", "origin"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Server 'origin' removed."));
+    let config = std::fs::read_to_string(ws.path().join(".repo.json")).unwrap();
+    assert!(!config.contains("origin"));
+}
+
 // --- project list ---
 
 #[test]
