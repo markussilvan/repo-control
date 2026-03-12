@@ -59,3 +59,52 @@ fn project_list_empty() {
         .success()
         .stdout(predicate::str::contains("No projects configured."));
 }
+
+#[test]
+fn project_list_shows_multiple_projects() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_projects_config(
+        r#"{"projects":[
+            {"name":"alpha","git_server_alias":"origin","git_path":"/alpha.git","path":"alpha"},
+            {"name":"beta","git_server_alias":"backup","git_path":"/beta.git","path":"beta"}
+        ]}"#,
+    );
+    ws.cmd()
+        .args(["project", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("alpha"))
+        .stdout(predicate::str::contains("beta"));
+}
+
+// --- status ---
+
+#[test]
+fn status_unknown_for_missing_project_dir() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_projects_config(
+        r#"{"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/foo.git","path":"myproject"}]}"#,
+    );
+    // "myproject/" directory does not exist
+    ws.cmd()
+        .args(["status"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("myproject"))
+        .stdout(predicate::str::contains("UNKNOWN"));
+}
+
+#[test]
+fn status_clean_for_synced_git_repo() {
+    let ws = TestWorkspace::new_initialized();
+    ws.make_clean_repo("myproject");
+    ws.write_projects_config(
+        r#"{"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/foo.git","path":"myproject"}]}"#,
+    );
+    ws.cmd()
+        .args(["status"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("myproject"))
+        .stdout(predicate::str::contains("CLEAN"));
+}
