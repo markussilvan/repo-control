@@ -32,8 +32,8 @@ It defines used Git servers (machine-local, not checked in):
 ```json
 {
   "servers": [
-    { "alias": "github", "server": "ssh://git@github.com" },
-    { "alias": "homelab", "server": "https://homelab.local" }
+    { "alias": "github", "url": "ssh://git@github.com" },
+    { "alias": "homelab", "url": "https://homelab.local" }
   ],
   "autoignore": true,
   "autocommit": true
@@ -156,9 +156,14 @@ Manages the list of projects in `projects.json`.
 
 ```
 repo project list              # List all configured projects
-repo project add               # Add a new project interactively
+repo project add               # Add an existing project interactively
+repo project create            # Create a new local project directory with git init
 repo project remove [path]     # Remove a project by local path (prompted if omitted)
 ```
+
+`repo project create` prompts for the same fields as `add`, then creates the local
+directory and runs `git init` before registering the project. Fails if the directory
+already exists.
 
 ### `repo server`
 
@@ -175,3 +180,9 @@ repo server edit [alias]       # Edit a server alias and/or URL (prompted if omi
 Enter to keep the current value for either field. If the server URL changed,
 you will be asked whether to update the `origin` remote in all affected local
 repositories automatically.
+
+## Links
+
+Repo control in [crates.io](https://crates.io/crates/repo-control),
+[GitHub](https://github.com/markussilvan/repo-control) and
+[Docs.rs](https://docs.rs/crate/repo-control/latest).
