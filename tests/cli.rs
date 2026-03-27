@@ -12,6 +12,52 @@ fn init_creates_config_files() {
     assert!(ws.path().join("projects.json").exists());
 }
 
+// --- version validation ---
+
+#[test]
+fn local_config_missing_version_is_rejected() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_local_config(r#"{"servers":[]}"#);
+    ws.cmd()
+        .args(["server", "list"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("version"));
+}
+
+#[test]
+fn local_config_future_version_is_rejected() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_local_config(r#"{"version":999,"servers":[]}"#);
+    ws.cmd()
+        .args(["server", "list"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("version"));
+}
+
+#[test]
+fn projects_config_missing_version_is_rejected() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_projects_config(r#"{"projects":[]}"#);
+    ws.cmd()
+        .args(["project", "list"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("version"));
+}
+
+#[test]
+fn projects_config_future_version_is_rejected() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_projects_config(r#"{"version":999,"projects":[]}"#);
+    ws.cmd()
+        .args(["project", "list"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("version"));
+}
+
 // --- guard: uninitialized workspace ---
 
 #[test]
@@ -62,6 +108,37 @@ fn server_add_writes_to_config() {
     let config = std::fs::read_to_string(ws.path().join(".repo.json")).unwrap();
     assert!(config.contains("origin"));
     assert!(config.contains("ssh://git@example.com"));
+}
+
+// --- server edit ---
+
+#[test]
+fn server_edit_updates_url() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_local_config(r#"{"version":1,"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
+    ws.cmd()
+        .args(["server", "edit", "origin"])
+        .write_stdin("\nssh://git@new.example.com\n")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Server updated."));
+    let config = std::fs::read_to_string(ws.path().join(".repo.json")).unwrap();
+    assert!(config.contains("ssh://git@new.example.com"));
+}
+
+#[test]
+fn server_edit_updates_alias() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_local_config(r#"{"version":1,"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
+    ws.cmd()
+        .args(["server", "edit", "origin"])
+        .write_stdin("upstream\n\n")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Server updated."));
+    let config = std::fs::read_to_string(ws.path().join(".repo.json")).unwrap();
+    assert!(config.contains("upstream"));
+    assert!(!config.contains("\"origin\""));
 }
 
 // --- server remove ---
@@ -126,6 +203,21 @@ fn project_add_writes_to_config() {
     assert!(config.contains("/myproject.git"));
 }
 
+// --- project add: invalid alias ---
+
+#[test]
+fn project_add_rejects_unknown_server_alias() {
+    let ws = TestWorkspace::new_initialized();
+    ws.cmd()
+        .args(["project", "add"])
+        .write_stdin("myproject\nnonexistent\n/myproject.git\nmyproject\n")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Invalid server alias"));
+    let config = std::fs::read_to_string(ws.path().join("projects.json")).unwrap();
+    assert!(!config.contains("myproject"));
+}
+
 // --- project create ---
 
 #[test]
@@ -139,8 +231,21 @@ fn project_create_makes_dir_and_config() {
         .success()
         .stdout(predicate::str::contains("Project created."));
     assert!(ws.path().join("myproject").is_dir());
+    assert!(ws.path().join("myproject/.git").is_dir());
     let config = std::fs::read_to_string(ws.path().join("projects.json")).unwrap();
     assert!(config.contains("myproject"));
+}
+
+#[test]
+fn project_create_rejects_unknown_server_alias() {
+    let ws = TestWorkspace::new_initialized();
+    ws.cmd()
+        .args(["project", "create"])
+        .write_stdin("myproject\nnonexistent\n/myproject.git\nmyproject\n")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Invalid server alias"));
+    assert!(!ws.path().join("myproject").exists());
 }
 
 #[test]
@@ -187,7 +292,26 @@ fn status_unknown_for_missing_project_dir() {
         .assert()
         .success()
         .stdout(predicate::str::contains("myproject"))
-        .stdout(predicate::str::contains("UNKNOWN"));
+        .stdout(predicate::str::contains("UNKNOWN"))
+        .stdout(predicate::str::contains("0/1 projects cloned."));
+}
+
+#[test]
+fn status_summary_mixed_cloned_and_missing() {
+    let ws = TestWorkspace::new_initialized();
+    ws.make_clean_repo("present");
+    ws.write_projects_config(
+        r#"{"version":1,"projects":[
+            {"name":"present","git_server_alias":"origin","git_path":"/present.git","path":"present"},
+            {"name":"missing","git_server_alias":"origin","git_path":"/missing.git","path":"missing"}
+        ]}"#,
+    );
+    ws.cmd()
+        .args(["status"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("1/2 projects cloned."))
+        .stdout(predicate::str::contains("1/2 projects clean."));
 }
 
 #[test]
@@ -202,5 +326,6 @@ fn status_clean_for_synced_git_repo() {
         .assert()
         .success()
         .stdout(predicate::str::contains("myproject"))
-        .stdout(predicate::str::contains("CLEAN"));
+        .stdout(predicate::str::contains("CLEAN"))
+        .stdout(predicate::str::contains("All 1 projects cloned and clean."));
 }
