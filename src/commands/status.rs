@@ -2,6 +2,7 @@ use tracing::info;
 
 use crate::cli::show_status_table;
 use crate::config::ConfigManager;
+use crate::error::ProjectStatus;
 use crate::git::check_project_status;
 
 pub fn run(config: &ConfigManager) {
@@ -24,4 +25,22 @@ pub fn run(config: &ConfigManager) {
         .collect();
 
     show_status_table(&statuses);
+
+    let total = statuses.len();
+    let cloned = statuses
+        .iter()
+        .filter(|(_, s)| !matches!(s, ProjectStatus::Unknown | ProjectStatus::Uninitialized))
+        .count();
+    let clean = statuses.iter().filter(|(_, s)| matches!(s, ProjectStatus::Clean)).count();
+
+    if cloned == total && clean == total {
+        println!("All {} projects cloned and clean.", total);
+    } else {
+        if cloned < total {
+            println!("{}/{} projects cloned.", cloned, total);
+        }
+        if clean < total {
+            println!("{}/{} projects clean.", clean, total);
+        }
+    }
 }
