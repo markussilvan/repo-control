@@ -1,5 +1,6 @@
 use std::fs;
 use std::io::{self, BufRead, Write};
+use std::process;
 
 use crate::cli::show_projects_table;
 use crate::config::{ConfigManager, Project};
@@ -43,18 +44,77 @@ pub fn run_add(config: &mut ConfigManager) {
         git_path,
         path: local_path.clone(),
     };
+
+    let commit_msg = format!("repo: add project {}", name);
+    if register_project(config, project, &local_path, &commit_msg) {
+        println!("Project added.");
+    }
+}
+
+pub fn run_create(config: &mut ConfigManager) {
+    let stdin = io::stdin();
+    let stdout = io::stdout();
+    let name = prompt(&stdin, &stdout, "Project name: ");
+    let server_alias = prompt(&stdin, &stdout, "Server alias: ");
+    let git_path = prompt(&stdin, &stdout, "Git path: ");
+    let local_path = prompt(&stdin, &stdout, "Local path: ");
+
+    if let Err(e) = config.get_server_url(&server_alias) {
+        eprintln!("Invalid server alias '{}': {}", server_alias, e);
+        return;
+    }
+
+    let project = Project {
+        name: name.clone(),
+        git_server_alias: server_alias,
+        git_path,
+        path: local_path.clone(),
+    };
+
+    let dir = config.project_dir(&project);
+
+    if dir.exists() {
+        eprintln!("Directory already exists: {}", dir.display());
+        process::exit(1);
+    }
+
+    if let Err(e) = fs::create_dir_all(&dir) {
+        eprintln!("Failed to create directory '{}': {}", dir.display(), e);
+        process::exit(1);
+    }
+
+    if let Err(e) = git::run_git(&dir, &["init"]) {
+        eprintln!("Failed to run git init in '{}': {}", dir.display(), e);
+        let _ = fs::remove_dir_all(&dir);
+        process::exit(1);
+    }
+
+    let commit_msg = format!("repo: create project {}", name);
+    if register_project(config, project, &local_path, &commit_msg) {
+        println!("Project created.");
+    }
+}
+
+/// Pushes `project` into projects.json and handles autoignore/autocommit.
+/// Returns true on success, false if a fatal error occurred (already reported to stderr).
+fn register_project(
+    config: &mut ConfigManager,
+    project: Project,
+    local_path: &str,
+    commit_msg: &str,
+) -> bool {
     let pc = match config.projects_config.as_mut() {
         Some(pc) => pc,
         None => {
             eprintln!("Projects config not loaded");
-            return;
+            return false;
         }
     };
     pc.projects.push(project);
 
     if let Err(e) = config.save_projects_config() {
         eprintln!("Failed to save projects config: {}", e);
-        return;
+        return false;
     }
 
     let (autoignore, autocommit) = config
@@ -72,7 +132,7 @@ pub fn run_add(config: &mut ConfigManager) {
             if !content.is_empty() && !content.ends_with('\n') {
                 content.push('\n');
             }
-            content.push_str(&local_path);
+            content.push_str(local_path);
             content.push('\n');
             if let Err(e) = fs::write(&gitignore_path, &content) {
                 eprintln!("Warning: failed to update .gitignore: {}", e);
@@ -89,15 +149,12 @@ pub fn run_add(config: &mut ConfigManager) {
         add_args.extend_from_slice(&files);
         if let Err(e) = git::run_git(&config.project_root, &add_args) {
             eprintln!("Warning: git add failed: {}", e);
-        } else {
-            let msg = format!("repo: add project {}", name);
-            if let Err(e) = git::run_git(&config.project_root, &["commit", "-m", &msg]) {
-                eprintln!("Warning: git commit failed: {}", e);
-            }
+        } else if let Err(e) = git::run_git(&config.project_root, &["commit", "-m", commit_msg]) {
+            eprintln!("Warning: git commit failed: {}", e);
         }
     }
 
-    println!("Project added.");
+    true
 }
 
 pub fn run_remove(config: &mut ConfigManager, path: Option<String>) {

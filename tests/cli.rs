@@ -126,6 +126,36 @@ fn project_add_writes_to_config() {
     assert!(config.contains("/myproject.git"));
 }
 
+// --- project create ---
+
+#[test]
+fn project_create_makes_dir_and_config() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_local_config(r#"{"version":1,"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
+    ws.cmd()
+        .args(["project", "create"])
+        .write_stdin("myproject\norigin\n/myproject.git\nmyproject\n")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Project created."));
+    assert!(ws.path().join("myproject").is_dir());
+    let config = std::fs::read_to_string(ws.path().join("projects.json")).unwrap();
+    assert!(config.contains("myproject"));
+}
+
+#[test]
+fn project_create_fails_if_dir_exists() {
+    let ws = TestWorkspace::new_initialized();
+    ws.write_local_config(r#"{"version":1,"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
+    std::fs::create_dir(ws.path().join("myproject")).unwrap();
+    ws.cmd()
+        .args(["project", "create"])
+        .write_stdin("myproject\norigin\n/myproject.git\nmyproject\n")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("already exists"));
+}
+
 // --- project remove ---
 
 #[test]

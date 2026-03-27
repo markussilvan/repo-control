@@ -37,6 +37,8 @@ pub enum Commands {
 pub enum ProjectCommands {
     /// Add a new project interactively
     Add,
+    /// Create a new local project directory with git init
+    Create,
     /// Remove a project by local path
     Remove {
         /// Local path of the project to remove (prompted if omitted)

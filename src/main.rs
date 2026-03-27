@@ -43,6 +43,7 @@ fn main() {
         Commands::Project { subcommand } => match subcommand {
             ProjectCommands::List => commands::project::run_list(&config),
             ProjectCommands::Add => commands::project::run_add(&mut config),
+            ProjectCommands::Create => commands::project::run_create(&mut config),
             ProjectCommands::Remove { path } => commands::project::run_remove(&mut config, path),
         },
         Commands::Server { subcommand } => match subcommand {
