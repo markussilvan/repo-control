@@ -23,7 +23,7 @@ fn device_id(_path: &Path) -> Option<u64> {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Server {
     pub alias: String,
-    pub server: String,
+    pub url: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -171,7 +171,7 @@ impl ConfigManager {
         lc.servers
             .iter()
             .find(|s| s.alias == alias)
-            .map(|s| s.server.clone())
+            .map(|s| s.url.clone())
             .ok_or_else(|| RepoError::UnknownAlias(alias.to_string()))
     }
 

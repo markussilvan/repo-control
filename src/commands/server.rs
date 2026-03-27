@@ -16,7 +16,7 @@ pub fn run_list(config: &ConfigManager) {
         println!("No servers configured.");
         return;
     }
-    let rows: Vec<(String, String)> = servers.iter().map(|s| (s.alias.clone(), s.server.clone())).collect();
+    let rows: Vec<(String, String)> = servers.iter().map(|s| (s.alias.clone(), s.url.clone())).collect();
     show_server_table(&rows);
 }
 
@@ -37,7 +37,7 @@ pub fn run_add(config: &mut ConfigManager) {
         eprintln!("Server alias '{}' already exists.", alias);
         return;
     }
-    lc.servers.push(Server { alias, server: url });
+    lc.servers.push(Server { alias, url });
 
     if let Err(e) = config.save_local_config() {
         eprintln!("Failed to save local config: {}", e);
@@ -112,7 +112,7 @@ pub fn run_edit(config: &mut ConfigManager, alias: Option<String>) {
             }
         };
         match lc.servers.iter().find(|s| s.alias == target) {
-            Some(s) => (s.alias.clone(), s.server.clone()),
+            Some(s) => (s.alias.clone(), s.url.clone()),
             None => {
                 eprintln!("No server found with alias '{}'", target);
                 return;
@@ -144,7 +144,7 @@ pub fn run_edit(config: &mut ConfigManager, alias: Option<String>) {
         }
         if let Some(s) = lc.servers.iter_mut().find(|s| s.alias == target) {
             s.alias = new_alias.clone();
-            s.server = new_url.clone();
+            s.url = new_url.clone();
         }
     }
 

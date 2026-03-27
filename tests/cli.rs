@@ -39,7 +39,7 @@ fn server_list_empty() {
 #[test]
 fn server_list_shows_configured_servers() {
     let ws = TestWorkspace::new_initialized();
-    ws.write_local_config(r#"{"servers":[{"alias":"origin","server":"ssh://git@example.com"}]}"#);
+    ws.write_local_config(r#"{"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
     ws.cmd()
         .args(["server", "list"])
         .assert()
@@ -69,7 +69,7 @@ fn server_add_writes_to_config() {
 #[test]
 fn server_remove_updates_config() {
     let ws = TestWorkspace::new_initialized();
-    ws.write_local_config(r#"{"servers":[{"alias":"origin","server":"ssh://git@example.com"}]}"#);
+    ws.write_local_config(r#"{"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
     ws.cmd()
         .args(["server", "remove", "origin"])
         .assert()
@@ -113,7 +113,7 @@ fn project_list_shows_multiple_projects() {
 #[test]
 fn project_add_writes_to_config() {
     let ws = TestWorkspace::new_initialized();
-    ws.write_local_config(r#"{"servers":[{"alias":"origin","server":"ssh://git@example.com"}]}"#);
+    ws.write_local_config(r#"{"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
     ws.cmd()
         .args(["project", "add"])
         .write_stdin("myproject\norigin\n/myproject.git\nmyproject\n")
