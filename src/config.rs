@@ -40,8 +40,20 @@ impl Project {
     }
 }
 
+const CURRENT_VERSION: u32 = 1;
+
+fn validate_version(version: u32, file: &str) -> Result<(), RepoError> {
+    if version > CURRENT_VERSION {
+        return Err(RepoError::Config(format!(
+            "{file} has version {version}, but this application only supports up to version {CURRENT_VERSION}"
+        )));
+    }
+    Ok(())
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LocalConfig {
+    pub version: u32,
     pub servers: Vec<Server>,
     #[serde(default)]
     pub autocommit: bool,
@@ -51,6 +63,7 @@ pub struct LocalConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProjectsConfig {
+    pub version: u32,
     pub projects: Vec<Project>,
 }
 
@@ -116,7 +129,9 @@ impl ConfigManager {
         let path = self.project_root.join(Self::LOCAL_CONFIG);
         debug!("Loading local config from {}", path.display());
         let contents = fs::read_to_string(&path)?;
-        self.local_config = Some(load_json(&contents)?);
+        let config: LocalConfig = load_json(&contents)?;
+        validate_version(config.version, Self::LOCAL_CONFIG)?;
+        self.local_config = Some(config);
         Ok(())
     }
 
@@ -124,20 +139,23 @@ impl ConfigManager {
         let path = self.project_root.join(Self::PROJECTS_CONFIG);
         debug!("Loading projects config from {}", path.display());
         let contents = fs::read_to_string(&path)?;
-        self.projects_config = Some(load_json(&contents)?);
+        let config: ProjectsConfig = load_json(&contents)?;
+        validate_version(config.version, Self::PROJECTS_CONFIG)?;
+        self.projects_config = Some(config);
         Ok(())
     }
 
     pub fn create_local_config(&self) -> Result<(), RepoError> {
         let path = self.project_root.join(Self::LOCAL_CONFIG);
-        let default = LocalConfig { servers: vec![], autocommit: false, autoignore: false };
+        let default = LocalConfig { version: CURRENT_VERSION, servers: vec![], autocommit: false, autoignore: false };
         fs::write(&path, serde_json::to_string_pretty(&default)?)?;
         Ok(())
     }
 
     pub fn create_projects_config(&self) -> Result<(), RepoError> {
         let path = self.project_root.join(Self::PROJECTS_CONFIG);
-        fs::write(&path, "{\"projects\": []}\n")?;
+        let default = ProjectsConfig { version: CURRENT_VERSION, projects: vec![] };
+        fs::write(&path, serde_json::to_string_pretty(&default)?)?;
         Ok(())
     }
 

@@ -39,7 +39,7 @@ fn server_list_empty() {
 #[test]
 fn server_list_shows_configured_servers() {
     let ws = TestWorkspace::new_initialized();
-    ws.write_local_config(r#"{"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
+    ws.write_local_config(r#"{"version":1,"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
     ws.cmd()
         .args(["server", "list"])
         .assert()
@@ -69,7 +69,7 @@ fn server_add_writes_to_config() {
 #[test]
 fn server_remove_updates_config() {
     let ws = TestWorkspace::new_initialized();
-    ws.write_local_config(r#"{"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
+    ws.write_local_config(r#"{"version":1,"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
     ws.cmd()
         .args(["server", "remove", "origin"])
         .assert()
@@ -95,7 +95,7 @@ fn project_list_empty() {
 fn project_list_shows_multiple_projects() {
     let ws = TestWorkspace::new_initialized();
     ws.write_projects_config(
-        r#"{"projects":[
+        r#"{"version":1,"projects":[
             {"name":"alpha","git_server_alias":"origin","git_path":"/alpha.git","path":"alpha"},
             {"name":"beta","git_server_alias":"backup","git_path":"/beta.git","path":"beta"}
         ]}"#,
@@ -113,7 +113,7 @@ fn project_list_shows_multiple_projects() {
 #[test]
 fn project_add_writes_to_config() {
     let ws = TestWorkspace::new_initialized();
-    ws.write_local_config(r#"{"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
+    ws.write_local_config(r#"{"version":1,"servers":[{"alias":"origin","url":"ssh://git@example.com"}]}"#);
     ws.cmd()
         .args(["project", "add"])
         .write_stdin("myproject\norigin\n/myproject.git\nmyproject\n")
@@ -132,7 +132,7 @@ fn project_add_writes_to_config() {
 fn project_remove_updates_config() {
     let ws = TestWorkspace::new_initialized();
     ws.write_projects_config(
-        r#"{"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/myproject.git","path":"myproject"}]}"#,
+        r#"{"version":1,"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/myproject.git","path":"myproject"}]}"#,
     );
     ws.cmd()
         .args(["project", "remove", "myproject"])
@@ -149,7 +149,7 @@ fn project_remove_updates_config() {
 fn status_unknown_for_missing_project_dir() {
     let ws = TestWorkspace::new_initialized();
     ws.write_projects_config(
-        r#"{"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/foo.git","path":"myproject"}]}"#,
+        r#"{"version":1,"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/foo.git","path":"myproject"}]}"#,
     );
     // "myproject/" directory does not exist
     ws.cmd()
@@ -165,7 +165,7 @@ fn status_clean_for_synced_git_repo() {
     let ws = TestWorkspace::new_initialized();
     ws.make_clean_repo("myproject");
     ws.write_projects_config(
-        r#"{"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/foo.git","path":"myproject"}]}"#,
+        r#"{"version":1,"projects":[{"name":"myproject","git_server_alias":"origin","git_path":"/foo.git","path":"myproject"}]}"#,
     );
     ws.cmd()
         .args(["status"])

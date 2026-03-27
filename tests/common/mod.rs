@@ -16,8 +16,8 @@ impl TestWorkspace {
     /// Temp dir pre-populated with empty config files (skips testing `init` itself).
     pub fn new_initialized() -> Self {
         let ws = Self::new();
-        std::fs::write(ws.path().join(".repo.json"), "{\"servers\":[]}\n").unwrap();
-        std::fs::write(ws.path().join("projects.json"), "{\"projects\":[]}\n").unwrap();
+        std::fs::write(ws.path().join(".repo.json"), "{\"version\":1,\"servers\":[]}\n").unwrap();
+        std::fs::write(ws.path().join("projects.json"), "{\"version\":1,\"projects\":[]}\n").unwrap();
         ws
     }
 
