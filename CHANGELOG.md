@@ -4,6 +4,21 @@ This changelog tries to adhere to the [Common Changelog](https://common-changelo
 specification.
 
 
+## [0.4.0] - 2026-03-28
+
+### Added
+
+ - New command: `repo project create`
+ - Version field in both configuration files
+ - Summary line after `repo status` indicating how many projects are cloned and clean
+
+### Changed
+
+ - Configuration file content
+   - Renamed `server` field to `url` in the server configuration
+   - Added a new required field `version` to both configuration files
+
+
 ## [0.3.0] - 2026-03-13
 
 A switch to use JSON as the configuration file format.
